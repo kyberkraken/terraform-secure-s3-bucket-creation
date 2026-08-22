@@ -1,0 +1,38 @@
+name: Terraform Deployment
+on: [push]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./terraform
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: fetch sts creds from vault
+        uses: hashicorp/vault-action@v3
+        with:
+          url: http://35.154.11.16:8200
+          role: gh-actions-role
+          method: jwt
+          secrets: |
+            aws/creds/terraform-assume-role access_key | AWS_ACCESS_KEY_ID ;
+            aws/creds/terraform-assume-role secret_key | AWS_SECRET_ACCESS_KEY ;
+            aws/creds/terraform-assume-role security_token | AWS_SESSION_TOKEN
+
+      - uses: hashicorp/setup-terraform@v3
+      - run: terraform init
+      - run: terraform plan
+      - run: terraform apply -auto-approve
+        
+
+  
+
+  
+  
